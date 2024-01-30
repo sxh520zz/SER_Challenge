@@ -295,10 +295,3 @@ if __name__ == '__main__':
     file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Label.pickle', 'wb')
     pickle.dump(Train_data_label, file)
     file.close()
-
-    '''
-    train_data_map = Seg_IEMOCAP(Train_data_spec,Train_data_text,Train_data_SSL,Train_data_label)
-    file = open('Speech_data_hubert.pickle', 'wb')
-    pickle.dump(train_data_map, file)
-    file.close()  
-    '''
