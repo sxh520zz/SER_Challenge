@@ -1,3 +1,2 @@
 # SER_Challenge
 
-# Cooperation
