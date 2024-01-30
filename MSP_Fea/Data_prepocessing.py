@@ -265,7 +265,7 @@ def Read_MSP_Label():
                 print(i)
     Fin_data = []
     for i in range(len(Speaker)):
-        if(len(Speaker[i] == 8)):
+        if(len(Speaker[i]) == 8):
             Fin_data.append(Speaker[i])
     
     return Fin_data
