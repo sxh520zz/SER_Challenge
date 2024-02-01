@@ -27,7 +27,7 @@ import pickle
 import csv
 import torch
 import torchaudio
-from transformers import AutoProcessor, HubertModel
+
 
 #Data information
 Audio_Data_dir = '/mnt/data1/liyongwei/Database/MSP/Audios/'
@@ -38,8 +38,14 @@ Partitions = '/mnt/data1/liyongwei/Database/MSP/Partitions.txt'
 Speaker_dir = '/mnt/data1/liyongwei/Database/MSP/Speaker_ids.txt'
 
 #SSL information
+from transformers import AutoProcessor, HubertModel
 processor = AutoProcessor.from_pretrained("/mnt/data1/liyongwei/SSL_Models/facebook/hubert-large-ls960-ft")
 model = HubertModel.from_pretrained("/mnt/data1/liyongwei/SSL_Models/facebook/hubert-large-ls960-ft")
+
+from transformers import RobertaTokenizer, RobertaModel
+tokenizer = RobertaTokenizer.from_pretrained("/mnt/data1/liyongwei/SSL_Models/facebook/roberta-large")
+MAX_LEN = 128
+
 
 def emo_change(x):
     if x == 'xxx' or x == 'oth':
@@ -94,29 +100,26 @@ def Read_MSP_SSL():
         file_dir = os.path.join(Audio_Data_dir, sess)
         wavname = sess.split("/")[-1][:-4]
         # training set
-        mel_data = []
         one_mel_data = {}
         audio_input, sample_rate = process_wav_file(file_dir,3)
         input_values = processor(audio_input, sampling_rate=sample_rate,
                                     return_tensors="pt").input_values
-        SSL_Vec = model(input_values[0]).last_hidden_state
-        SSL_Vec = SSL_Vec.mean(1)
-        mel_data.append(SSL_Vec.detach().numpy())
         one_mel_data['id'] = wavname
-        mel_data = np.array(mel_data)
-        one_mel_data['SSL_data'] = mel_data
+        one_mel_data['SSL_data'] = input_values
         train_mel_data.append(one_mel_data)
         train_num = train_num + 1
-    print(train_num)
+        print(train_num)
     return train_mel_data
 
 def Read_MSP_Text():
-    files_dict = {}
+    
+    files_dict = []
 
     # 遍历文件夹中的所有文件
     for filename in os.listdir(Transcripts_Data_dir):
         # 确保文件以.txt为扩展名
         if filename.endswith(".txt"):
+            text_map ={}
             file_path = os.path.join(Transcripts_Data_dir, filename)
             
             # 从文件名中提取id，即去掉扩展名的部分
@@ -126,8 +129,20 @@ def Read_MSP_Text():
             with open(file_path, 'r', encoding='utf-8') as file:
                 file_content = file.read()
 
-            # 将id和内容存储到字典中
-            files_dict[file_id] = file_content
+            text_map['id'] = file_id
+            # 使用正则表达式匹配并替换 "[...]" 格式的内容
+            content_without_brackets = re.sub(r'\[.*?\]', '', file_content)
+
+            # 新增使用bert的tokenizer， 使用正则表达式去除标点符号
+            str = re.sub(r'[^\w\s]', '', content_without_brackets)
+            # 对输入文本进行tokenization并添加特殊token
+            encoding = tokenizer(str, truncation=True, padding='max_length', max_length=MAX_LEN, return_tensors='pt')
+            input_ids = encoding.get('input_ids').squeeze()
+            attention_mask = encoding.get('attention_mask').squeeze()
+            text_map['input_ids'] = input_ids.float()
+            text_map['attention_mask'] = attention_mask.float()
+
+            files_dict.append(text_map)
 
     return files_dict
 
@@ -262,7 +277,6 @@ def Read_MSP_Label():
                 Speaker[i]['V'] = Label_file[j]['V']
                 Speaker[i]['D'] = Label_file[j]['D']
                 Speaker[i]['Partitions'] = Label_file[j]['Partitions']
-                print(i)
     Fin_data = []
     for i in range(len(Speaker)):
         if(len(Speaker[i]) == 8):
@@ -281,17 +295,43 @@ def normalization(data,name):
             data[i][j][name] = Scaler.transform(data[i][j][name])
     return data
 
+
 if __name__ == '__main__':
+    '''
     #Mel
-    #Train_data_spec = Read_MSP_Spec()
+    Train_data_spec = Read_MSP_Spec()
+    file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/MSP_Spec.pickle', 'wb')
+    pickle.dump(Train_data_spec, file)
+    file.close()
+
     #OpenSmile 
     #train_data_trad = Read_MSP_Trad()
+    '''
     #Text
-    #Train_data_text = Read_MSP_Text()
-    #SSL
-    #Train_data_SSL = Read_MSP_SSL()
-    #Label
-    Train_data_label = Read_MSP_Label()
-    file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Label.pickle', 'wb')
-    pickle.dump(Train_data_label, file)
+    Train_data_text = Read_MSP_Text()
+    file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/MSP_Text.pickle', 'wb')
+    pickle.dump(Train_data_text, file)
     file.close()
+
+    '''
+    #SSL
+    Train_data_SSL = Read_MSP_SSL()
+    file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/MSP_Hubert.pickle', 'wb')
+    pickle.dump(Train_data_SSL, file)
+    file.close()
+    '''
+    #Label
+    '''
+    Train_data_label = Read_MSP_Label()
+    file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/MSP_Label.pickle', 'wb')
+    pickle.dump(Train_data_label, file)
+    file.close()  
+    '''
+
+
+    '''
+    train_data_map = Seg_IEMOCAP(Train_data_spec,Train_data_text,Train_data_SSL,Train_data_label)
+    file = open('Speech_data_hubert.pickle', 'wb')
+    pickle.dump(train_data_map, file)
+    file.close()  
+    '''
