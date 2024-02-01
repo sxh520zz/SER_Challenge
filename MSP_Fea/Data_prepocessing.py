@@ -271,6 +271,8 @@ def Read_MSP_Label():
 
     for i in range(len(Speaker)):
         for j in range(len(Label_file)):
+            print(Speaker[i]['Name'])
+            print(Label_file[j]['Name'])
             if(Speaker[i]['Name'] == Label_file[j]['Name']):
                 Speaker[i]['Emo_main'] = Label_file[j]['Emo_main']
                 Speaker[i]['A'] = Label_file[j]['A']
@@ -281,7 +283,24 @@ def Read_MSP_Label():
     for i in range(len(Speaker)):
         if(len(Speaker[i]) == 8):
             Fin_data.append(Speaker[i])
-    
+    print(Fin_data[0])
+    # 指定CSV文件路径
+    csv_file_path = '/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/output.csv'
+
+    # 将字典写入CSV文件
+    with open(csv_file_path, 'w', newline='') as csv_file:
+        # 定义CSV文件的表头（header）
+        fieldnames = ['Name', 'speaker_id', 'Gander', 'Emo_main', 'A', 'V', 'D', 'Partitions']
+        
+        # 创建CSV写入器
+        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        
+        # 写入表头
+        csv_writer.writeheader()
+        
+        # 写入数据
+        csv_writer.writerows(Fin_data)
+
     return Fin_data
 
 def normalization(data,name):
@@ -306,13 +325,13 @@ if __name__ == '__main__':
 
     #OpenSmile 
     #train_data_trad = Read_MSP_Trad()
-    '''
+
     #Text
     Train_data_text = Read_MSP_Text()
     file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/MSP_Text.pickle', 'wb')
     pickle.dump(Train_data_text, file)
     file.close()
-
+    '''
     '''
     #SSL
     Train_data_SSL = Read_MSP_SSL()
@@ -321,12 +340,12 @@ if __name__ == '__main__':
     file.close()
     '''
     #Label
-    '''
+
     Train_data_label = Read_MSP_Label()
     file = open('/mnt/data1/liyongwei/Project/Xiaohan_code/Odyssey_SER_Challenge/MSP_Fea/MSP_Label.pickle', 'wb')
     pickle.dump(Train_data_label, file)
     file.close()  
-    '''
+
 
 
     '''
