@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on Tue Jan  9 20:32:28 2018
-
 @author: shixiaohan
 """
 import re
